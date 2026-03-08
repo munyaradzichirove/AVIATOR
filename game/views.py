@@ -44,3 +44,12 @@ def new_game(request):
         game_id = data.get("game_id")
         print(f"[EVENT] NEW GAME STARTED - ID: {game_id}")
         return JsonResponse({"status": "ok", "game_id": game_id})
+
+@csrf_exempt
+def start_game(request):
+    if request.method == "POST":
+        # For demo, just increment a simple counter or random ID
+        game_id = getattr(request, "last_game_id", 1)
+        request.last_game_id = game_id + 1  # store in memory for now
+        print(f"[EVENT] NEW GAME STARTED - ID: {game_id}")
+        return JsonResponse({"status": "ok", "game_id": game_id})
