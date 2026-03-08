@@ -14,7 +14,7 @@ def aviator_game(request):
 def bet(request):
     if request.method == "POST":
         data = json.loads(request.body)
-        user = data.get("user")
+        user = data.get("user_id")
         amount = data.get("amount")
         print(f"[EVENT] {user} placed BET: {amount}")
         return JsonResponse({"status": "ok", "user": user, "bet": amount})

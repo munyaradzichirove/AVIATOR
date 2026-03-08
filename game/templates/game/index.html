@@ -185,12 +185,37 @@
 
         function onBet() {
             isCashed = false;
-            activeBetAmount = document.getElementById('bet-amt').value;
-            document.getElementById('bet-btn').innerText = "WAITING...";
-            document.getElementById('bet-btn').style.opacity = "0.5";
-            console.log(`[ID: ${betId}] - PLACED BET: ${activeBetAmount}`);
-        }
 
+            const betAmount = document.getElementById("bet-amt").value;
+            const gameId = window.CURRENT_GAME_ID;
+            const userId = "demo_user";   // dummy user for now
+
+            activeBetAmount = betAmount;
+
+            document.getElementById("bet-btn").innerText = "WAITING...";
+            document.getElementById("bet-btn").style.opacity = "0.5";
+
+            fetch("/api/bet/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    game_id: gameId,
+                    user_id: userId,
+                    amount: betAmount
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(`[API] Bet accepted for game ${gameId}`, data);
+            })
+            .catch(err => {
+                console.error("[API] Bet failed:", err);
+            });
+
+            console.log(`[ID: ${gameId}] - PLACED BET: ${betAmount}`);
+        }
         function startRound() {
             const countdownBox = document.getElementById("countdown-box");
             const multiplierDisplay = document.getElementById("multiplier");
