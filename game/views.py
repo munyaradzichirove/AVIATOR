@@ -38,18 +38,18 @@ def plane_crash(request):
         return JsonResponse({"status": "ok", "game_id": game_id, "crash_point": crash_point})
 
 @csrf_exempt
-def new_game(request):
+def request_game_id(request):
+    if request.method == "POST":
+        # later this will come from DB
+        game_id = 21
+        print(f"[EVENT] GAME ID REQUESTED -> {game_id}")
+        return JsonResponse({"game_id": game_id})
+
+
+@csrf_exempt
+def run_game(request):
     if request.method == "POST":
         data = json.loads(request.body)
         game_id = data.get("game_id")
-        print(f"[EVENT] NEW GAME STARTED - ID: {game_id}")
-        return JsonResponse({"status": "ok", "game_id": game_id})
-
-@csrf_exempt
-def start_game(request):
-    if request.method == "POST":
-        # For demo, just increment a simple counter or random ID
-        game_id = getattr(request, "last_game_id", 1)
-        request.last_game_id = game_id + 1  # store in memory for now
-        print(f"[EVENT] NEW GAME STARTED - ID: {game_id}")
-        return JsonResponse({"status": "ok", "game_id": game_id})
+        print(f"[EVENT] GAME STARTED -> {game_id}")
+        return JsonResponse({"status": "ok"})
