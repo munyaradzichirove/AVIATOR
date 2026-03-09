@@ -20,15 +20,6 @@ def bet(request):
         return JsonResponse({"status": "ok", "user": user, "bet": amount})
 
 @csrf_exempt
-def cashout(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        user = data.get("user")
-        multiplier = data.get("multiplier")
-        print(f"[EVENT] {user} cashed out at {multiplier}x")
-        return JsonResponse({"status": "ok", "user": user, "multiplier": multiplier})
-
-@csrf_exempt
 def plane_crash(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -53,3 +44,56 @@ def run_game(request):
         game_id = data.get("game_id")
         print(f"[EVENT] GAME STARTED -> {game_id}")
         return JsonResponse({"status": "ok"})
+
+
+# Dummy storage for demo
+DUMMY_BETS = {}          # { (user_id, game_id): {"amount": 10, "cashed_out": False} }
+DUMMY_MULTIPLIERS = {}   # { game_id: 2.5 }
+
+def get_user_bet(user_id, game_id):
+    key = (user_id, game_id)
+    if key not in DUMMY_BETS:
+        # Create a fake bet for testing
+        DUMMY_BETS[key] = {"amount": 10, "cashed_out": False, "payout": 0}
+    return DUMMY_BETS[key]
+
+def get_current_multiplier(game_id):
+    # Use stored multiplier or fake one
+    return DUMMY_MULTIPLIERS.get(game_id, 2.0)
+
+def add_money_to_user_account(user_id, amount):
+    # Just print for now
+    print(f"[WALLET] Added {amount} to user {user_id}")
+
+@csrf_exempt
+def cashout(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "POST required"}, status=400)
+
+    data = json.loads(request.body)
+    user_id = data.get("user_id")
+    game_id = data.get("game_id")
+
+    if not user_id or not game_id:
+        return JsonResponse({"status": "error", "message": "Missing user_id or game_id"}, status=400)
+
+    # 1. Get user's bet
+    bet = get_user_bet(user_id, game_id)
+    if bet["cashed_out"]:
+        return JsonResponse({"status": "error", "message": "Already cashed out"}, status=400)
+
+    # 2. Get real multiplier
+    multiplier = get_current_multiplier(game_id)
+
+    # 3. Calculate payout
+    payout = round(bet["amount"] * multiplier, 2)
+
+    # 4. Update dummy storage
+    bet["cashed_out"] = True
+    bet["payout"] = payout
+    DUMMY_BETS[(user_id, game_id)] = bet
+    add_money_to_user_account(user_id, payout)  # just print for now
+
+    print(f"[EVENT] USER {user_id} cashed out at {multiplier}x, payout: {payout}")
+
+    return JsonResponse({"status": "ok", "payout": payout, "multiplier": multiplier})
