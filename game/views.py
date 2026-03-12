@@ -24,6 +24,14 @@ def plane_crash(request):
         data = json.loads(request.body)
         game_id = data.get("game_id")
         crash_point = data.get("crash_point")
+        event = {
+            "event_type": "PLANE_CRASH",
+            "game_id": game_id,
+            "crash_point": crash_point,
+            "timestamp": time.time(),
+            "status": "finished"
+        }
+        send_event(topic="plane_crash", key=game_id, event_data=event)
         print(f"[EVENT] Game {game_id} - PLANE CRASHED at {crash_point}x")
         return JsonResponse({"status": "ok", "game_id": game_id, "crash_point": crash_point})
 
