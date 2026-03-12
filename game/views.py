@@ -1,15 +1,14 @@
 from django.shortcuts import render
+from events.kafka_config import send_event
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from .models import GameID
+import time
 
-# --- Page view ---
 def aviator_game(request):
-    # Just renders your template
     return render(request, "game/index.html")
 
-
-# --- API endpoints ---
 @csrf_exempt
 def bet(request):
     if request.method == "POST":
@@ -30,11 +29,11 @@ def plane_crash(request):
 
 @csrf_exempt
 def request_game_id(request):
-    if request.method == "POST":
-        # later this will come from DB
-        game_id = 21
-        print(f"[EVENT] GAME ID REQUESTED -> {game_id}")
-        return JsonResponse({"game_id": game_id})
+    game_tracker, _ = GameID.objects.get_or_create(id=1)
+    game_tracker.current_id += 1
+    game_tracker.save()
+    print(f"[EVENT] GAME ID REQUESTED -> {game_tracker.current_id}")
+    return JsonResponse({"game_id": game_tracker.current_id})
 
 
 @csrf_exempt
@@ -42,11 +41,20 @@ def run_game(request):
     if request.method == "POST":
         data = json.loads(request.body)
         game_id = data.get("game_id")
+
+         # Fire directly to Kafka
+        event = {
+            "event_type": "GAME_START",
+            "game_id": game_id,
+            "timestamp": time.time(),
+            "status": "in_progress"
+        }
+        send_event(topic="game_launch", key=game_id, event_data=event)
+
+
         print(f"[EVENT] GAME STARTED -> {game_id}")
         return JsonResponse({"status": "ok"})
 
-
-# Dummy storage for demo
 DUMMY_BETS = {}          # { (user_id, game_id): {"amount": 10, "cashed_out": False} }
 DUMMY_MULTIPLIERS = {}   # { game_id: 2.5 }
 
