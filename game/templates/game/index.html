@@ -182,31 +182,41 @@
                 list.appendChild(d);
             }
         }
-      function onCashout() {
-    if (!window.CURRENT_GAME_ID) return console.error("No active game");
 
-    const userId = 123;  // replace with real logged-in user ID
+   function onCashout() {
+    if (!window.CURRENT_GAME_ID) {
+        console.error("[CASHOUT] No active game");
+        return;
+    }
+
+    const userId = "demo_user";   // dummy user for now
     const gameId = window.CURRENT_GAME_ID;
+
+    // grab the current multiplier from the HTML
+    const multiplier = parseFloat(document.getElementById("multiplier").innerText) || 1.0;
 
     fetch("/api/cashout/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, game_id: gameId })
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            game_id: gameId,
+            multiplier: multiplier   // <-- send it here
+        })
     })
     .then(res => res.json())
     .then(data => {
-        if (data.status !== "ok") {
-            console.error("[CASHOUT] Error:", data.message);
-            return;
-        }
+        console.log("[CASHOUT RESPONSE]", data);
 
-        const msgBox = document.getElementById('cashout-msg');
-        msgBox.style.display = "flex";
-        msgBox.querySelector('#msg-val').innerText = data.payout.toFixed(2) + "x";
-        console.log(`[CASHOUT] User ${userId} got ${data.payout} at ${data.multiplier}x`);
+        document.getElementById("cash-btn").style.display = "none";
+        document.getElementById("cashout-msg").style.display = "flex";
+        document.getElementById("msg-val").innerText = multiplier.toFixed(2) + "x";
     })
     .catch(err => console.error("[CASHOUT] Failed:", err));
-}
+}  
+
         function onBet() {
             isCashed = false;
 

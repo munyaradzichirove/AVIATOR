@@ -13,11 +13,23 @@ def aviator_game(request):
 def bet(request):
     if request.method == "POST":
         data = json.loads(request.body)
-        user = data.get("user_id")
+        user_id = data.get("user_id")
         amount = data.get("amount")
-        print(f"[EVENT] {user} placed BET: {amount}")
-        return JsonResponse({"status": "ok", "user": user, "bet": amount})
+        game_id = data.get("game_id", "unknown")  # optional if available
 
+        # Fire event to Kafka
+        event = {
+            "event_type": "BET_PLACED",
+            "game_id": game_id,
+            "player": user_id,
+            "bet_amount": amount,
+            "timestamp": time.time(),
+            "status": "active"
+        }
+        send_event(topic="placed_bets", key=user_id, event_data=event)
+
+        print(f"[EVENT] {user_id} placed BET: {amount}")
+        return JsonResponse({"status": "ok", "user": user_id, "bet": amount})
 @csrf_exempt
 def plane_crash(request):
     if request.method == "POST":
@@ -43,14 +55,11 @@ def request_game_id(request):
     print(f"[EVENT] GAME ID REQUESTED -> {game_tracker.current_id}")
     return JsonResponse({"game_id": game_tracker.current_id})
 
-
 @csrf_exempt
 def run_game(request):
     if request.method == "POST":
         data = json.loads(request.body)
         game_id = data.get("game_id")
-
-         # Fire directly to Kafka
         event = {
             "event_type": "GAME_START",
             "game_id": game_id,
@@ -58,29 +67,9 @@ def run_game(request):
             "status": "in_progress"
         }
         send_event(topic="game_launch", key=game_id, event_data=event)
-
-
         print(f"[EVENT] GAME STARTED -> {game_id}")
         return JsonResponse({"status": "ok"})
-
-DUMMY_BETS = {}          # { (user_id, game_id): {"amount": 10, "cashed_out": False} }
-DUMMY_MULTIPLIERS = {}   # { game_id: 2.5 }
-
-def get_user_bet(user_id, game_id):
-    key = (user_id, game_id)
-    if key not in DUMMY_BETS:
-        # Create a fake bet for testing
-        DUMMY_BETS[key] = {"amount": 10, "cashed_out": False, "payout": 0}
-    return DUMMY_BETS[key]
-
-def get_current_multiplier(game_id):
-    # Use stored multiplier or fake one
-    return DUMMY_MULTIPLIERS.get(game_id, 2.0)
-
-def add_money_to_user_account(user_id, amount):
-    # Just print for now
-    print(f"[WALLET] Added {amount} to user {user_id}")
-
+    
 @csrf_exempt
 def cashout(request):
     if request.method != "POST":
@@ -89,27 +78,29 @@ def cashout(request):
     data = json.loads(request.body)
     user_id = data.get("user_id")
     game_id = data.get("game_id")
+    multiplier = data.get("multiplier")
 
     if not user_id or not game_id:
         return JsonResponse({"status": "error", "message": "Missing user_id or game_id"}, status=400)
 
-    # 1. Get user's bet
-    bet = get_user_bet(user_id, game_id)
-    if bet["cashed_out"]:
-        return JsonResponse({"status": "error", "message": "Already cashed out"}, status=400)
+    bet_amount = data.get("bet_amount", 0)
 
-    # 2. Get real multiplier
-    multiplier = get_current_multiplier(game_id)
+    event = {
+        "event_type": "CASHOUT",
+        "user_id": user_id,
+        "game_id": game_id,
+        "bet_amount": bet_amount,
+        "multiplier": multiplier,
+        "timestamp": time.time(),
+        "status": "completed"
+    }
 
-    # 3. Calculate payout
-    payout = round(bet["amount"] * multiplier, 2)
+    send_event(topic="cash_out", key=str(user_id), event_data=event)
 
-    # 4. Update dummy storage
-    bet["cashed_out"] = True
-    bet["payout"] = payout
-    DUMMY_BETS[(user_id, game_id)] = bet
-    add_money_to_user_account(user_id, payout)  # just print for now
+    print(f"[KAFKA] Cashout event sent for user {user_id}, game {game_id}")
+    print(f"[EVENT] USER {user_id} cashed out at {multiplier}x")
 
-    print(f"[EVENT] USER {user_id} cashed out at {multiplier}x, payout: {payout}")
-
-    return JsonResponse({"status": "ok", "payout": payout, "multiplier": multiplier})
+    return JsonResponse({
+        "status": "ok",
+        "multiplier": multiplier
+    })
