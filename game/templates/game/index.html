@@ -183,46 +183,45 @@
             }
         }
 
-   function onCashout() {
-    if (!window.CURRENT_GAME_ID) {
-        console.error("[CASHOUT] No active game");
-        return;
-    }
+        function onCashout() {
+            if (!window.CURRENT_GAME_ID) {
+                console.error("[CASHOUT] No active game");
+                return;
+            }
 
-    const userId = "demo_user";   // dummy user for now
-    const gameId = window.CURRENT_GAME_ID;
+            const userId = "demo_user";   // dummy user for now
+            const gameId = window.CURRENT_GAME_ID;
 
-    // grab the current multiplier from the HTML
-    const multiplier = parseFloat(document.getElementById("multiplier").innerText) || 1.0;
+            const multiplier = parseFloat(document.getElementById("multiplier").innerText) || 1.0;
 
-    fetch("/api/cashout/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            user_id: userId,
-            game_id: gameId,
-            multiplier: multiplier   // <-- send it here
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        console.log("[CASHOUT RESPONSE]", data);
+            fetch("/api/cashout/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    game_id: gameId,
+                    multiplier: multiplier   
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("[CASHOUT RESPONSE]", data);
 
-        document.getElementById("cash-btn").style.display = "none";
-        document.getElementById("cashout-msg").style.display = "flex";
-        document.getElementById("msg-val").innerText = multiplier.toFixed(2) + "x";
-    })
-    .catch(err => console.error("[CASHOUT] Failed:", err));
-}  
+                document.getElementById("cash-btn").style.display = "none";
+                document.getElementById("cashout-msg").style.display = "flex";
+                document.getElementById("msg-val").innerText = multiplier.toFixed(2) + "x";
+            })
+            .catch(err => console.error("[CASHOUT] Failed:", err));
+        }  
 
         function onBet() {
             isCashed = false;
 
             const betAmount = document.getElementById("bet-amt").value;
             const gameId = window.CURRENT_GAME_ID;
-            const userId = "demo_user";   // dummy user for now
+            const userId = "demo_user"; 
 
             activeBetAmount = betAmount;
 
@@ -254,8 +253,6 @@
             const countdownBox = document.getElementById("countdown-box");
             const multiplierDisplay = document.getElementById("multiplier");
             const countdownNum = document.getElementById("countdown-num");
-
-            // Ask Django for the next game ID
             fetch("/api/request_game_id/", { method: "POST" })
                 .then(res => res.json())
                 .then(({ game_id }) => {
@@ -263,10 +260,7 @@
                     console.log(`[API] Received Game ID: ${game_id}`);
                     window.CURRENT_GAME_ID = game_id;
 
-                    // Prepare players list
                     generatePlayers();
-
-                    // Show countdown UI
                     countdownBox.style.display = "block";
                     multiplierDisplay.style.display = "none";
 
@@ -282,8 +276,6 @@
 
                             countdownBox.style.display = "none";
                             multiplierDisplay.style.display = "block";
-
-                            // Start the round
                             fly(game_id);
                         }
 
@@ -307,8 +299,6 @@
                 document.getElementById('cash-btn').style.display = "flex";
             }
             let crashPoint = (Math.random() * 4 + 1.1).toFixed(2);
-
-            // hit API for new game
             fetch("/api/run_game/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -339,7 +329,7 @@
                 document.getElementById('curve-shade').setAttribute("d", path + ` L ${lastX} 400 L 0 400 Z`);
 
                 if(mult >= crashPoint) {
-                    crash(crashPoint, game_id); // pass game_id
+                    crash(crashPoint, game_id); 
                 }
             }, 40);
         }
@@ -354,8 +344,7 @@
             plane.style.transition = "transform 0.8s ease-in, opacity 0.8s";
             plane.style.transform = `translate(${lastX + 600}px, ${lastY - 600}px) rotate(-25deg)`;
             plane.style.opacity = "0";
-
-            // hit plane crash API
+            
             fetch("/api/plane_crash/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

@@ -15,9 +15,8 @@ def bet(request):
         data = json.loads(request.body)
         user_id = data.get("user_id")
         amount = data.get("amount")
-        game_id = data.get("game_id", "unknown")  # optional if available
+        game_id = data.get("game_id")
 
-        # Fire event to Kafka
         event = {
             "event_type": "BET_PLACED",
             "game_id": game_id,
@@ -96,7 +95,6 @@ def cashout(request):
     }
 
     send_event(topic="cash_out", key=str(user_id), event_data=event)
-
     print(f"[KAFKA] Cashout event sent for user {user_id}, game {game_id}")
     print(f"[EVENT] USER {user_id} cashed out at {multiplier}x")
 
