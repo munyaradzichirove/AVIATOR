@@ -11,9 +11,9 @@ producer = Producer(CONF)
 
 def delivery_report(err, msg):
     if err:
-        print(f"❌ Delivery failed: {err}")
+        print(f"Delivery failed: {err}")
     else:
-        print(f"✅ Event fired to {msg.topic()} [partition {msg.partition()}]")
+        print(f"Event fired to {msg.topic()} [partition {msg.partition()}]")
 
 def send_event(topic, key, event_data: dict):
     payload = json.dumps(event_data).encode('utf-8')
