@@ -61,7 +61,7 @@ WebSocket Gateway	Pushes live events to clients for real-time updates
 
 ---
 
-🚀 Example Event (JSON)
+Example Event (JSON)
 
 Bet Event
 
@@ -138,16 +138,5 @@ Docker – Containerized deployment
 
 
 
----
-
-✅ Why This Project Stands Out
-
-Demonstrates real-time event-driven system design
-
-Shows microservices and consumer groups in action
-
-Integrates analytics & monitoring pipelines
-
-Scalable and production-ready using Docker
 
 
